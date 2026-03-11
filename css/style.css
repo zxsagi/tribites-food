@@ -173,7 +173,7 @@ body {
   position: relative;
 
 }
-/* 
+
 #shopping-cart-button .quantity-badge {
   display: inline-block;
   padding: 1px 5px;
@@ -185,7 +185,7 @@ body {
   right: -10px;
 
 }
- */
+
 .shopping-cart {
   position: fixed;
   top: 6rem;
