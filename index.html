@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TriBites</title>
+    <link rel="icon" href="img/TribitesLogo.png" type="image/x-icon">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,300;0,400;0,700;1,700&display=swap"
+      rel="stylesheet" />
+
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <link rel="stylesheet" href="css/style.css" />
+    <!-- AlpineJS -->
+    <script defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script src="src/app.js" async></script>
+
+  </head>
+  <body>
+
+    <!-- Navbar start -->
+    <nav class="navbar" x-data="products">
+      <a href="#" class="navbar-logo">TriBites<span>Food</span></a>
+
+      <div class="navbar-nav">
+        <a href="#home">Home</a>
+        <a href="#about">Tentang Kami</a>
+        <a href="#menu">Menu</a>
+        <a href="#products">Produk</a>
+        <a href="#contact">Kontak</a>
+      </div>
+
+      <div class="navbar-extra">
+        <a href="#" id="search-button"><i data-feather="search"></i></a>
+        <a href="#" id="shopping-cart-button">
+          <i data-feather="shopping-cart"></i>
+          <span class="quantity-badge" x-show="$store.cart.quantity"
+            x-text="$store.cart.quantity"></span>
+        </a>
+        <a href="#" id="hamburger-menu" @click.prevent>
+          <i data-feather="menu"></i></a>
+      </div>
+
+      <!-- Search Form start -->
+      <div class="search-form">
+
+        <input
+          type="search"
+          id="search-box"
+          placeholder="search here..."
+          x-model="search"
+          @keydown.arrow-down.prevent="navigateDown"
+          @keydown.arrow-up.prevent="navigateUp"
+          @keydown.enter.prevent="enterSelection"
+          autocomplete="off">
+
+        <!-- SEARCH ICON -->
+        <label for="search-box">
+          <i data-feather="search"></i>
+        </label>
+
+        <!-- CLEAR SEARCH -->
+        <div class="search-clear"
+          x-show="search.length"
+          @click="clearSearch"
+          style="cursor:pointer">
+
+          <i data-feather="x"></i>
+        </div>
+
+        <!-- SUGGESTION -->
+        <div class="search-suggestion"
+          x-show="suggestions.length"
+          x-cloak
+          @click.outside="closeSuggestion">
+
+          <template x-for="(item,index) in suggestions" :key="item.id">
+
+            <div class="suggestion-item"
+              :class="{'active-suggestion': index === selectedIndex}"
+              @click="selectSuggestion(item)">
+
+              <span x-html="highlight(item.name)"></span>
+
+            </div>
+
+          </template>
+
+        </div>
+
+      </div>
+      <!-- Search Form end -->
+
+      <!-- Shopping Cart start -->
+      <div class="shopping-cart">
+        <template x-for="(item, index) in $store.cart.items" x-key="index">
+          <div class="cart-item">
+            <img :src="`img/products/${item.img}`" :alt="item.name">
+            <div class="item-detail">
+              <h3 x-text="item.name"></h3>
+              <div class="item-price">
+                <span x-text="rupiah(item.price)"></span> &times;
+                <button id="remove"
+                  @click="$store.cart.remove(item.id)">&minus;</button>
+                <span x-text="item.quantity"></span>
+                <button id="add" @click="$store.cart.add(item)">&plus;</button>
+                &equals;
+                <span x-text="rupiah(item.total)"></span>
+              </div>
+            </div>
+          </div>
+        </template>
+        <h4 x-show="!$store.cart.items.length && !$store.cart.success"
+          style="margin-top: 1rem;">Cart is
+          Empty</h4>
+        <h4 x-show="$store.cart.items.length">Total : <span
+            x-text="rupiah($store.cart.total)"></span></h4>
+
+        <div class="form-container" x-show="$store.cart.items.length">
+          <form action id="checkoutForm">
+            <input type="hidden" name="items"
+              x-model="JSON.stringify($store.cart.items)">
+            <input type="hidden" name="total" x-model="$store.cart.total">
+            <h5>Customer Detail</h5>
+
+            <label for="name">
+              <span>Name</span>
+              <input type="text" name="name" id="name">
+            </label>
+
+            <label for="email">
+              <span>Email</span>
+              <input type="email" name="email" id="email">
+            </label>
+
+            <label for="phone">
+              <span>Phone</span>
+              <input type="number" name="phone" id="phone" autocomplete="off">
+            </label>
+
+            <button class="checkout-button disabled" type="submit"
+              id="checkout-button"
+              value="checkout">Checkout</button>
+          </form>
+        </div>
+        <div class="checkout-success"
+          x-show="$store.cart.success"
+          x-transition:enter="transition ease-out duration-[5000ms]"
+          x-transition:enter-start="opacity-0 scale-75 translate-y-10"
+          x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+          style="text-align:center; margin-top:50%; border:2px solid #ddd; border-radius:8px; padding:25px; background:#fff;">
+
+          <h3 class="success-title">Terima kasih telah memesan makanan kami
+            🍗🍚</h3>
+          <p class="success-text">Pesanan Anda sedang kami proses di
+            WhatsApp.</p>
+
+        </div>
+      </div>
+      <!-- Shopping Cart end -->
+
+    </nav>
+    <!-- Navbar End -->
+
+    <!-- Hero Section Start -->
+    <section class="hero" id="home">
+      <div class="mask-container">
+        <main class="content">
+          <h1>Mari Nikmati <span>Makanan & Cemilan</span></h1>
+          <p>Nikmati berbagai makanan lezat dan cemilan crispy yang siap menggugah selera Anda. 😋🍗🍌</p>
+          <a href="#products" class="cta">Beli Sekarang</a>
+        </main>
+      </div>
+    </section>
+    <!-- Hero Section End -->
+
+    <!-- About Section start -->
+    <section id="about" class="about">
+      <h2><span>Tentang</span> Kami</h2>
+
+      <div class="row">
+        <div class="about-img">
+          <img src="img/tentang-kami.jpg" alt="Tentang Kami">
+        </div>
+        <div class="content">
+          <h3>Kenapa memilih makanan kami?</h3>
+          <p>Menu kami dibuat dari bahan pilihan yang selalu segar,
+            diolah dengan resep terbaik untuk menghasilkan rasa yang lezat dan
+            memuaskan di setiap porsi.</p>
+          <p>Kami tidak hanya menyajikan nasi ayam dan pisang crispy,
+            tetapi juga menghadirkan kepuasan, kenyamanan, dan pengalaman makan
+            yang bikin ingin kembali lagi.</p>
+        </div>
+      </div>
+    </section>
+    <!-- About Section end -->
+
+    <!-- Menu Section start -->
+    <section id="menu" class="menu">
+      <h2><span>Menu</span> Kami</h2>
+      <p>Nikmati berbagai pilihan nasi ayam yang gurih dan lezat, serta pisang
+        crispy yang renyah dan manis menggoda.
+        Setiap menu dibuat dengan bahan berkualitas untuk memberikan rasa
+        terbaik dan siap menemani setiap momen makan Anda.
+      </p>
+
+      <div class="row">
+        <div class="menu-card">
+          <img src="img/menu/1.jpg" alt="AyamGeprek" class="menu-card-img">
+          <h3 class="menu-card-title">- Nasi Ayam Geprek -</h3>
+          <p class="menu-card-price">IDR 20K</p>
+        </div>
+        <div class="menu-card">
+          <img src="img/menu/2.jpg" alt="PisangCrispy" class="menu-card-img">
+          <h3 class="menu-card-title">- Pisang Crispy -</h3>
+          <p class="menu-card-price">IDR 15K</p>
+        </div>
+
+      </div>
+    </section>
+    <!-- Menu Section end -->
+
+    <!-- Products Section start -->
+    <section class="products" id="products" x-data="products">
+      <h2><span>Produk Unggulan</span> Kami</h2>
+      <p>Beberapa menu favorit yang paling sering dipesan.
+        Rasa terbaik yang siap menemani harimu.</p>
+
+      <div class="row">
+        <template x-for="item in filteredItems" :key="item.id">
+
+          <div class="product-card" :id="'product-' + item.id">
+            <div class="product-icons">
+              <a href="#" @click.prevent="$store.cart.add(item)">
+                <i data-feather="shopping-cart"></i>
+              </a>
+
+              <a href="#" @click.prevent="openModal(item)">
+                <i data-feather="eye"></i>
+              </a>
+            </div>
+
+            <div class="product-image">
+              <img :src="`img/products/${item.img}`" :alt="item.name">
+            </div>
+
+            <div class="product-content">
+              <h3 x-text="item.name"></h3>
+
+              <div class="product-stars">
+                <template x-for="n in 5" :key="n">
+                  <span x-text="n <= item.rating ? '★' : '☆'"></span>
+                </template>
+              </div>
+
+              <div class="product-price">
+                <span x-text="rupiah(item.price)"></span>
+              </div>
+            </div>
+
+          </div>
+
+        </template>
+        <div x-show="filteredItems.length === 0" class="not-found">
+          Product not found
+        </div>
+
+      </div>
+
+      <!-- MODAL -->
+      <div class="modal"
+        x-show="showModal"
+        x-cloak
+        @click.self="closeModal()"
+        @keydown.escape.window="closeModal()"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0">
+
+        <div class="modal-container"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 scale-90"
+          x-transition:enter-end="opacity-100 scale-100"
+          x-transition:leave="transition ease-in duration-200"
+          x-transition:leave-start="opacity-100 scale-100"
+          x-transition:leave-end="opacity-0 scale-90">
+
+          <a href="#" class="close-icon" @click.prevent="closeModal()"
+            style="cursor:pointer">
+            <i data-feather="x"></i>
+          </a>
+
+          <div class="modal-content">
+
+            <img :src="`img/products/${selectedItem?.img}`">
+
+            <div class="product-content">
+
+              <h3 x-text="selectedItem?.name"></h3>
+
+              <p x-text="selectedItem?.description"></p>
+
+              <div class="product-stars">
+                <template x-for="n in 5" :key="n">
+                  <span
+                    x-text="n <= (selectedItem?.rating || 0) ? '★' : '☆'"></span>
+                </template>
+              </div>
+
+              <div class="product-price">
+                <span x-text="rupiah(selectedItem?.price)"></span>
+              </div>
+
+              <a href="#" @click.prevent="$store.cart.add(selectedItem)">
+                <i data-feather="shopping-cart"></i>
+                <span>Add to cart</span>
+              </a>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+      <!-- MODAL -->
+    </section>
+    <!-- Products Section end -->
+
+    <!-- Contact Section start -->
+    <section id="contact" class="contact">
+      <h2><span>Kontak</span> Kami</h2>
+      <p>Kami siap membantu Anda. Hubungi kami untuk informasi lebih lanjut.
+      </p>
+
+      <div class="row">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.722966933866!2d107.5764409090698!3d-6.803517393165512!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e1de0863eb07%3A0xcbc7afead1238825!2sKENT%20%26%20DEROL%20BAKESHOP!5e0!3m2!1sid!2sid!4v1772651063631!5m2!1sid!2sid"
+          width="600" height="450" style="border:0;"
+          allowfullscreen loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade" class="map">
+        </iframe>
+
+        <form id="contactForm">
+          <div class="input-group">
+            <i data-feather="user"></i>
+            <input type="text" placeholder="Nama" required>
+          </div>
+          <div class="input-group">
+            <i data-feather="mail"></i>
+            <input type="text" placeholder="Email" required>
+          </div>
+          <div class="input-group">
+            <i data-feather="phone"></i>
+            <input type="text" placeholder="No HP" required>
+          </div>
+          <div class="input-group">
+            <i data-feather="message-square"></i>
+            <input type="text" placeholder="Kirimkan pesan anda..." required>
+          </div>
+
+          <button type="submit" class="btn" id="sendBtn">Kirim Pesan</button>
+        </form>
+
+      </div>
+    </section>
+    <!-- Contact Section end -->
+
+    <!-- Alert Start saat kirim -->
+    <div id="toast-message" class="toast">
+      <div class="toast-icon">✔</div>
+      <div class="toast-text">
+        <strong>Pesan anda terkirim!</strong>
+        <p>Terima kasih telah menghubungi kami.</p>
+      </div>
+    </div>
+    <!-- Alert End -->
+
+    <!-- Footer start -->
+    <footer>
+      <div class="socials">
+        <a href="https://www.instagram.com/elsayyyu/" class="instagram"><i
+            data-feather="instagram"></i></a>
+        <a href="https://www.x.com/" class="twitter"><i
+            data-feather="twitter"></i></a>
+        <a href="https://www.facebook.com/" class="facebook"><i
+            data-feather="facebook"></i></a>
+      </div>
+
+      <div class="links">
+        <a href="#home">Home</a>
+        <a href="#about">Tentang Kami</a>
+        <a href="#menu">Menu</a>
+        <a href="#products">Produk</a>
+        <a href="#contact">Kontak</a>
+      </div>
+
+      <div class="credit">
+        <p>Created by <a href>sagisetiono</a>. | &copy; 2026.</p>
+      </div>
+    </footer>
+    <!-- Footer end -->
+
+    <!-- Feather Icons -->
+    <script>
+      feather.replace();
+    </script>
+
+    <!-- My Javascript -->
+    <script src="js/script.js"></script>
+  </body>
+</html>
